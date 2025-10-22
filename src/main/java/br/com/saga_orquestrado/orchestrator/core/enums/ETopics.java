@@ -1,4 +1,4 @@
-package br.com.saga_orquestrado.orchestrator;
+package br.com.saga_orquestrado.orchestrator.core.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
