@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 import static br.com.saga_orquestrado.orchestrator.core.saga.SagaHandler.*;
+import static java.lang.String.format;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Slf4j
@@ -23,11 +24,8 @@ public class SagaExecutionController {
         if (isEmpty(event.getSource()) || isEmpty(event.getStatus())) {
             throw new ValidationException("Source and status must be informed.");
         }
-
         var topic = findTopicBySourceAndStatus(event);
-
         logCurrentSaga(event, topic);
-
         return topic;
     }
 
@@ -43,24 +41,22 @@ public class SagaExecutionController {
         var source = row[EVENT_SOURCE_INDEX];
         var status = row[SAGA_STATUS_INDEX];
 
-        return event.getSource().equals(source) && event.getStatus().equals(status);
+        return source.equals(event.getSource()) && status.equals(event.getStatus());
     }
 
     private void logCurrentSaga(Event event, ETopics topic) {
         var sagaId = createSagaId(event);
         var source = event.getSource();
-
         switch (event.getStatus()) {
             case SUCCESS -> log.info("### CURRENT SAGA: {} | SUCCESS | NEXT TOPIC {} | {}", source, topic, sagaId);
             case ROLLBACK_PENDING ->
-                    log.info("### CURRENT SAGA: {} | SANDING TO ROLLBACK CURRENT SERVICE | NEXT TOPIC {} | {}", source, topic, sagaId);
+                    log.info("### CURRENT SAGA: {} | SENDING TO ROLLBACK CURRENT SERVICE | NEXT TOPIC {} | {}", source, topic, sagaId);
             case FAIL ->
-                    log.info("### CURRENT SAGA: {} | SANDING TO ROLLBACK PREVIOUS SERVICE | NEXT TOPIC {} | {}", source, topic, sagaId);
+                    log.info("### CURRENT SAGA: {} | SENDING TO ROLLBACK PREVIOUS SERVICE | NEXT TOPIC {} | {}", source, topic, sagaId);
         }
-
     }
 
     private String createSagaId(Event event) {
-        return String.format(SAGA_LOG_ID, event.getPayload().getId(), event.getTransactionId(), event.getId());
+        return format(SAGA_LOG_ID, event.getPayload().getId(), event.getTransactionId(), event.getId());
     }
 }
